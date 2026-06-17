@@ -164,9 +164,51 @@ textarea{font-family:inherit}
 .reset-btn:hover{color:var(--ember);background:var(--gold-soft)}
 
 @media(max-width:640px){.header{flex-direction:column;gap:18px;align-items:flex-start}.score-wrap{text-align:left}}
+
+/* ============ PREMIUM UPGRADE — depth · glass · motion · hero ============ */
+.bg-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.bg-aurora span{position:absolute;border-radius:50%;filter:blur(72px);opacity:.5;will-change:transform}
+.bg-aurora span:nth-child(1){width:48vw;height:48vw;left:-10vw;top:-12vw;background:radial-gradient(circle at 30% 30%,rgba(245,196,81,.55),rgba(201,150,46,.15) 60%,transparent 72%);animation:drift1 26s ease-in-out infinite}
+.bg-aurora span:nth-child(2){width:42vw;height:42vw;right:-12vw;top:-8vw;background:radial-gradient(circle at 60% 40%,rgba(184,116,31,.38),transparent 68%);animation:drift2 32s ease-in-out infinite}
+.bg-aurora span:nth-child(3){width:40vw;height:40vw;left:28vw;bottom:-18vw;background:radial-gradient(circle at 50% 50%,rgba(115,66,226,.14),transparent 66%);animation:drift3 40s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6vw,4vw) scale(1.08)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-5vw,5vw) scale(1.12)}}
+@keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-4vw,-5vw) scale(1.1)}}
+
+/* glassmorphic cards */
+.card{background:rgba(255,255,255,.78);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid rgba(255,255,255,.65);box-shadow:0 26px 64px rgba(25,40,55,.1),inset 0 1px 0 rgba(255,255,255,.75)}
+
+/* glossy gold button sheen */
+.btn.gold{position:relative;overflow:hidden}
+.btn.gold::after{content:"";position:absolute;top:0;left:-130%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-18deg)}
+.btn.gold:hover::after{animation:sheen .85s ease}
+@keyframes sheen{from{left:-130%}to{left:140%}}
+
+/* shimmering score bar */
+.score-bar-inner{background:linear-gradient(90deg,var(--gold),var(--gold-bright),var(--gold));background-size:200% 100%;animation:shimmer 3.2s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* HERO (step 0) with floating glossy orbs */
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(20px,3vw,34px);align-items:center}
+.hero-copy .h2{font-size:clamp(26px,4.4vw,42px);line-height:1.04;margin-bottom:14px}
+.hero-visual{position:relative;height:320px;border-radius:22px;overflow:hidden;background:linear-gradient(160deg,#ffffff,#F3EEE1);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 20px 48px rgba(25,40,55,.12)}
+.hero-visual .ribbon{position:absolute;left:-8%;right:-8%;bottom:30%;height:48%;background:linear-gradient(180deg,#fff,#ECE5D6);border-radius:50%;transform:rotate(-6deg);box-shadow:0 22px 44px rgba(25,40,55,.1)}
+.orb{position:absolute;border-radius:50%;will-change:transform;box-shadow:0 18px 32px rgba(25,40,55,.24)}
+.orb .body{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 32% 26%,#fff 0%,var(--c1) 28%,var(--c2) 68%,var(--c3) 100%)}
+.orb .gloss{position:absolute;top:11%;left:17%;width:34%;height:26%;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(255,255,255,.95),rgba(255,255,255,0) 72%)}
+.orb.o1{width:98px;height:98px;left:13%;top:30%;--c1:#F8D682;--c2:#E8A23A;--c3:#C9962E;animation:floatA 7s ease-in-out infinite}
+.orb.o2{width:62px;height:62px;left:45%;top:50%;--c1:#ECBBFF;--c2:#9A6BE8;--c3:#7342E2;animation:floatB 8.5s ease-in-out infinite}
+.orb.o3{width:80px;height:80px;left:64%;top:23%;--c1:#FFE391;--c2:#F5C451;--c3:#D99A20;animation:floatC 6.4s ease-in-out infinite}
+.orb.o4{width:38px;height:38px;left:33%;top:16%;--c1:#fff;--c2:#F0E6CF;--c3:#D6C6A2;animation:floatB 5.6s ease-in-out infinite}
+@keyframes floatA{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-18px) rotate(8deg)}}
+@keyframes floatB{0%,100%{transform:translateY(0)}50%{transform:translateY(-26px)}}
+@keyframes floatC{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-14px) rotate(-7deg)}}
+@media(max-width:760px){.hero{grid-template-columns:1fr}.hero-visual{height:210px;order:-1}}
+@media(prefers-reduced-motion:reduce){.bg-aurora span,.orb,.score-bar-inner,.btn.gold::after{animation:none}}
 </style>
 </head>
 <body>
+<div class="bg-aurora" aria-hidden="true"><span></span><span></span><span></span></div>
 <div id="app" class="wrap"></div>
 
 <script>
@@ -455,14 +497,25 @@ function railHTML() {
   return h + "</nav>";
 }
 
+function orb(cls) {
+  return '<div class="orb ' + cls + '"><span class="body"></span><span class="gloss"></span></div>';
+}
 function step0() {
   return (
     '<section class="card">' +
-      '<h2 class="h2">Đổ quặng thô vào lò</h2>' +
-      '<p class="lead">Viết ý tưởng theo cách bạn nghĩ trong đầu — lộn xộn cũng được. Lò sẽ tinh luyện sau.</p>' +
-      '<textarea class="ta" id="ideaInput" data-input="idea" rows="5" placeholder="VD: tôi muốn làm một game dạy con nhận diện các chiêu lừa đảo qua tình huống có nhánh, vui mà vẫn nhớ được bài học…"></textarea>' +
-      '<div class="actions">' +
-        '<button class="btn primary" id="nextBtn" data-step="1">Chọn lĩnh vực ' + icon("right") + "</button>" +
+      '<div class="hero">' +
+        '<div class="hero-copy">' +
+          '<h2 class="h2">Biến ý tưởng thô<br>thành prompt vàng</h2>' +
+          '<p class="lead">Viết ý tưởng theo cách bạn nghĩ trong đầu — lộn xộn cũng được. Lò sẽ tinh luyện qua 5 bước.</p>' +
+          '<textarea class="ta" id="ideaInput" data-input="idea" rows="4" placeholder="VD: tôi muốn làm một game dạy con nhận diện các chiêu lừa đảo qua tình huống có nhánh, vui mà vẫn nhớ được bài học…"></textarea>' +
+          '<div class="actions" style="justify-content:flex-start">' +
+            '<button class="btn gold" id="nextBtn" data-step="1">Bắt đầu rèn ' + icon("right") + "</button>" +
+          "</div>" +
+        "</div>" +
+        '<div class="hero-visual" aria-hidden="true">' +
+          '<div class="ribbon"></div>' +
+          orb("o3") + orb("o1") + orb("o2") + orb("o4") +
+        "</div>" +
       "</div>" +
     "</section>"
   );
