@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Prompt Forge · Lò rèn prompt vàng cho Claude Opus 4.8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link href="https://db.onlinewebfonts.com/c/04e6981992c0e2e7642af2074ebe3901?family=Helvetica+Now+Display+Bold" rel="stylesheet" />
+<style>
+:root{
+  --font-heading:'Helvetica Now Display Bold','Inter',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:ui-monospace,'SF Mono','Cascadia Code',Consolas,monospace;
+
+  --ink:#192837;          /* navy text */
+  --cream:#F2F2EE;        /* page background */
+  --surface:#FFFFFF;      /* cards */
+  --field:#F6F5F1;        /* inputs / selectable tiles */
+  --muted:#6E7480;        /* secondary text */
+  --line:#E7E4DB;         /* hairline */
+  --line-strong:#D9D5C9;
+
+  --gold:#C9962E;         /* deep gold accent */
+  --gold-bright:#F5C451;
+  --ember:#B8741F;
+  --gold-soft:rgba(201,150,46,.12);
+  --gold-ring:rgba(201,150,46,.18);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh;
+  background:radial-gradient(900px 520px at 86% -10%, rgba(201,150,46,.10), transparent 60%), var(--cream);
+  color:var(--ink);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  padding:26px clamp(16px,4vw,48px) 56px;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+button:disabled{opacity:.45;cursor:not-allowed}
+textarea{font-family:inherit}
+.ic{flex:none;display:inline-block;vertical-align:middle}
+
+/* ---- entrance motion ---- */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .55s cubic-bezier(.22,1,.36,1) both}
+.stagger>*{animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both}
+.stagger>*:nth-child(1){animation-delay:.04s}
+.stagger>*:nth-child(2){animation-delay:.08s}
+.stagger>*:nth-child(3){animation-delay:.12s}
+.stagger>*:nth-child(4){animation-delay:.16s}
+.stagger>*:nth-child(5){animation-delay:.20s}
+.stagger>*:nth-child(6){animation-delay:.24s}
+.stagger>*:nth-child(7){animation-delay:.28s}
+.stagger>*:nth-child(8){animation-delay:.32s}
+@media (prefers-reduced-motion:reduce){.fade-up,.stagger>*{animation:none}}
+
+/* ---- header / navbar ---- */
+.wrap{max-width:980px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:26px}
+.brand-row{display:flex;align-items:center;gap:14px}
+.brand-badge{
+  width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--gold-bright),var(--gold));color:var(--ink);
+  box-shadow:0 8px 22px rgba(201,150,46,.32);
+}
+.h1{margin:0;font-family:var(--font-heading);font-size:clamp(21px,3.4vw,27px);letter-spacing:.01em;font-weight:700;color:var(--ink);line-height:1}
+.tag{margin:5px 0 0;color:var(--muted);font-size:13.5px}
+.score-wrap{text-align:right;min-width:128px}
+.score-num{font-family:var(--font-heading);font-size:40px;font-weight:700;color:var(--gold);line-height:1}
+.score-lbl{font-size:10px;letter-spacing:.22em;color:var(--muted);margin-top:3px;font-weight:600}
+.score-bar-outer{height:5px;background:#E3E0D6;border-radius:3px;margin-top:9px;overflow:hidden}
+.score-bar-inner{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));border-radius:3px;transition:width .45s cubic-bezier(.22,1,.36,1)}
+
+/* ---- stepper rail ---- */
+.rail{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.rail-item{display:inline-flex;align-items:center;gap:10px;padding:9px 15px 9px 9px;border-radius:999px;color:var(--muted);font-weight:500;font-size:14px;border:1px solid transparent;transition:all .18s ease}
+.rail-item:hover{color:var(--ink);background:rgba(25,40,55,.045)}
+.rail-item.active{color:var(--ink);background:var(--surface);border-color:var(--line);box-shadow:0 3px 12px rgba(25,40,55,.06);font-weight:600}
+.rail-num{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:999px;font-size:12px;font-weight:700;background:#E6E3D9;color:var(--muted);transition:all .18s ease}
+.rail-item.active .rail-num{background:var(--ink);color:#fff}
+
+/* ---- card ---- */
+.main{margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:clamp(22px,4vw,40px);box-shadow:0 18px 50px rgba(25,40,55,.07)}
+.h2{margin:0 0 7px;font-size:clamp(21px,3vw,28px);color:var(--ink);font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.lead{margin:0 0 24px;color:var(--muted);font-size:15px;line-height:1.65;max-width:60ch}
+
+/* ---- inputs ---- */
+.ta,.q-input{width:100%;background:var(--field);border:1px solid var(--line-strong);border-radius:14px;color:var(--ink);padding:15px;font-size:15.5px;line-height:1.6;resize:vertical;transition:border-color .15s ease,box-shadow .15s ease}
+.ta::placeholder,.q-input::placeholder{color:#A6A294}
+.ta:focus,.q-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px var(--gold-ring);background:#fff}
+
+/* ---- buttons ---- */
+.actions{display:flex;justify-content:flex-end;gap:12px;margin-top:26px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:9px;border-radius:999px;font-size:15px;font-weight:600;padding:13px 22px;transition:transform .14s ease,box-shadow .2s ease,background .2s ease,filter .2s ease,border-color .18s ease}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn.primary{background:var(--ink);color:#fff}
+.btn.primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 24px rgba(25,40,55,.2)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong)}
+.btn.ghost:hover{background:rgba(25,40,55,.045)}
+.btn.gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:var(--ink);box-shadow:0 8px 24px rgba(201,150,46,.3)}
+.btn.gold:hover{transform:scale(1.03);filter:brightness(1.04)}
+
+/* ---- domain grid ---- */
+.domain-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.domain-card{text-align:left;background:var(--field);border:1px solid var(--line-strong);border-radius:16px;padding:18px 17px;color:var(--ink);transition:all .18s ease}
+.domain-card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 10px 26px rgba(25,40,55,.08)}
+.domain-card.active{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px var(--gold-ring),0 12px 28px rgba(25,40,55,.08)}
+.domain-label{font-size:17px;font-weight:700;margin-bottom:5px}
+.domain-hint{font-size:13px;color:var(--muted)}
+.domain-check{margin-top:12px;font-size:12.5px;color:var(--ember);font-weight:600;display:inline-flex;align-items:center;gap:6px}
+
+/* ---- interview ---- */
+.q-list{display:flex;flex-direction:column;gap:16px}
+.q-item{background:var(--field);border:1px solid var(--line);border-radius:16px;padding:18px}
+.q-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.q-dim{font-size:11px;letter-spacing:.14em;color:var(--ember);text-transform:uppercase;font-weight:700}
+.q-idx{font-size:12px;color:#B0AB9C;font-weight:600}
+.q-label{display:block;font-size:15.5px;color:var(--ink);margin-bottom:11px;line-height:1.5;font-weight:500}
+
+/* ---- techniques ---- */
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(244px,1fr));gap:13px}
+.tech-card{text-align:left;background:var(--field);border:1px solid var(--line-strong);border-radius:16px;padding:17px;color:var(--ink);transition:all .18s ease}
+.tech-card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 10px 26px rgba(25,40,55,.08)}
+.tech-card.on{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px var(--gold-ring),0 12px 28px rgba(25,40,55,.08)}
+.tech-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tech-name{font-size:16px;font-weight:700}
+.tech-dot{width:11px;height:11px;border-radius:50%;border:1.5px solid #C3BEAF;flex:none;transition:all .18s ease}
+.tech-card.on .tech-dot{background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 4px var(--gold-ring)}
+.tech-en{font-size:11px;color:var(--ember);font-weight:600;margin:3px 0 9px;letter-spacing:.04em;text-transform:uppercase}
+.tech-desc{font-size:13.5px;color:#4C5663;line-height:1.55}
+.tech-src{font-size:11px;color:var(--muted);margin-top:11px}
+
+/* ---- tune row ---- */
+.tune-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(244px,1fr));gap:20px;margin-top:26px;padding-top:24px;border-top:1px solid var(--line)}
+.tune-lbl{font-size:11.5px;letter-spacing:.12em;color:var(--ember);text-transform:uppercase;font-weight:700;margin-bottom:11px}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap}
+.pill{background:var(--field);border:1px solid var(--line-strong);color:var(--muted);padding:8px 15px;border-radius:999px;font-size:13px;font-weight:600;transition:all .16s ease}
+.pill:hover{color:var(--ink);border-color:var(--gold)}
+.pill.on{border-color:var(--gold);color:var(--ink);background:var(--gold-soft)}
+.tune-note{font-size:12.5px;color:var(--muted);margin-top:10px;min-height:16px}
+
+/* ---- forge output ---- */
+.forge-head{margin-bottom:18px}
+.forge-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.meta-chip{font-size:11.5px;font-family:var(--font-mono);background:var(--gold-soft);border:1px solid var(--gold-ring);color:var(--ember);padding:5px 12px;border-radius:999px;font-weight:600}
+.output-wrap{background:var(--ink);border:1px solid rgba(201,150,46,.45);border-radius:18px;box-shadow:0 16px 44px rgba(25,40,55,.22)}
+.output{margin:0;padding:22px;font-family:var(--font-mono);font-size:13px;line-height:1.7;color:#E8E3D6;white-space:pre-wrap;word-break:break-word;max-height:460px;overflow:auto}
+.output::-webkit-scrollbar{width:10px}
+.output::-webkit-scrollbar-thumb{background:rgba(201,150,46,.35);border-radius:6px}
+
+.tip-box{margin-top:24px;background:var(--gold-soft);border:1px solid var(--gold-ring);border-radius:16px;padding:20px 22px}
+.tip-head{color:var(--ink);font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.tip-list{margin:0;padding-left:20px;color:#3D4754;line-height:1.8;font-size:14.5px}
+.tip-list em{color:var(--ember);font-style:normal;font-weight:700}
+
+/* ---- footer ---- */
+.footer{margin:34px auto 0;text-align:center;color:var(--muted);font-size:12.5px;display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap}
+.reset-btn{color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;transition:all .16s ease}
+.reset-btn:hover{color:var(--ember);background:var(--gold-soft)}
+
+@media(max-width:640px){.header{flex-direction:column;gap:18px;align-items:flex-start}.score-wrap{text-align:left}}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+
+<script>
+"use strict";
+
+/* ============================================================================
+   PROMPT FORGE — Lò rèn prompt vàng cho Claude Opus 4.8
+   Pure-local · vanilla JS · không API · không build.
+   Logic assembler & thư viện kỹ thuật chưng cất từ Anthropic Docs, X, Reddit
+   và playbook cộng đồng Opus 4.8 (bản gốc PromptForge.jsx).
+============================================================================ */
+
+/* ---------- LUCIDE ICONS (inline, nét sắc) ------------------------------- */
+const ICONS = {
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  sparkles: '<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+  right: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  left: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+};
+function icon(name, size) {
+  size = size || 18;
+  return '<svg class="ic" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || "") + "</svg>";
+}
+
+/* ---------- DOMAIN PRESETS ------------------------------------------------ */
+const DOMAINS = {
+  edu: {
+    key: "edu",
+    label: "Giáo dục trẻ em",
+    hint: "Maya apps, học liệu, game học",
+    role: "chuyên gia thiết kế trải nghiệm học tập sớm cho trẻ em Việt",
+    audience: "phụ huynh và trẻ nhỏ Việt Nam (3–10 tuổi)",
+    qualityBar:
+      "Vui, an toàn, đúng độ tuổi, không tạo áp lực, không trừng phạt tiêu cực, và phải đo được tiến bộ của trẻ.",
+    constraints: [
+      "Tuyệt đối không dùng negative reinforcement với trẻ.",
+      "Ngôn ngữ thuần Việt, gần gũi, đúng văn hoá gia đình Việt.",
+      "Mọi hoạt động phải an toàn và phù hợp lứa tuổi đã nêu.",
+    ],
+  },
+  indie: {
+    key: "indie",
+    label: "Sản phẩm / Indie dev",
+    hint: "Next.js, React, app/web ngôi sao",
+    role: "kiến trúc sư sản phẩm và kỹ sư trưởng dày dạn, từng ship nhiều sản phẩm indie thành công",
+    audience: "đội ngũ phát triển nhỏ hoặc một solo builder",
+    qualityBar:
+      "Khả thi với nguồn lực một đội nhỏ, ưu tiên đầu ra dùng được ngay, có trade-off rõ ràng và lộ trình thực thi.",
+    constraints: [
+      "Ưu tiên giải pháp không phụ thuộc API trả phí khi có thể.",
+      "Nêu rõ trade-off về thời gian, chi phí và độ phức tạp.",
+      "Đầu ra phải có thể bắt tay làm ngay, không lý thuyết suông.",
+    ],
+  },
+  general: {
+    key: "general",
+    label: "Đa lĩnh vực",
+    hint: "Tài chính, marketing, nội dung, nghiên cứu…",
+    role: "chuyên gia tư vấn cấp cao đa ngành, tư duy sắc và thẳng thắn",
+    audience: "một người ra quyết định cần insight sâu, có thể hành động",
+    qualityBar:
+      "Đủ sâu để dùng làm nền cho bài viết dài, chiến lược sản phẩm hoặc một framework riêng.",
+    constraints: [
+      "Trực diện. Đưa nhận định thật, không 'còn tùy' cho có.",
+      "Dùng ví dụ cụ thể, có thật khi có thể.",
+      "Đánh dấu rõ mọi giả định đang sử dụng.",
+    ],
+  },
+};
+
+/* ---------- TECHNIQUE LIBRARY (chưng cất từ 3 nguồn) --------------------- */
+const TECHNIQUES = {
+  interviewer: { key: "interviewer", name: "Phỏng vấn ngược", en: "The Interviewer",
+    desc: "Bắt Claude hỏi sâu trước khi làm, thay vì đoán từ brief mơ hồ.", source: "X · ChatGPT (Ask-Me-First)" },
+  adversarial: { key: "adversarial", name: "Phản biện ác ý", en: "Adversarial Review",
+    desc: "Ép Claude bật chế độ phê bình gắt, chống thói 'thảo mai' (sycophancy).", source: "Reddit r/ClaudeAI" },
+  cot: { key: "cot", name: "Tư duy hiện (CoT)", en: "Visible Reasoning",
+    desc: "Buộc viết suy luận trong <analysis> trước khi ra kết luận.", source: "Anthropic Docs" },
+  topology: { key: "topology", name: "Bản đồ quan hệ", en: "Topology Navigation",
+    desc: "Vẽ mạng lưới thực thể + đo bán kính ảnh hưởng trước khi đề xuất.", source: "Reddit (kỹ sư)" },
+  workflow: { key: "workflow", name: "Explore→Plan→Verify", en: "Agentic Workflow",
+    desc: "Đọc → lập kế hoạch → thực thi → tự kiểm chứng → báo cáo.", source: "Claude Code Docs" },
+  honesty: { key: "honesty", name: "Chỉ thị trung thực", en: "Honesty Directive",
+    desc: "Mời Claude thừa nhận khi không chắc, đánh dấu giả định (mới ở 4.8).", source: "Anthropic Opus 4.8" },
+};
+
+/* ---------- EFFORT LEVELS (đặc trưng Opus 4.8) -------------------------- */
+const EFFORTS = [
+  { key: "medium", label: "medium", note: "task gọn, tiết kiệm token" },
+  { key: "high", label: "high", note: "mặc định, cân bằng" },
+  { key: "xhigh", label: "xhigh", note: "coding & agentic, khuyên dùng" },
+  { key: "max", label: "max", note: "nghiên cứu siêu sâu" },
+];
+const VERBOSITY = [["concise", "cô đọng"], ["balanced", "cân bằng"], ["deep", "đào sâu"]];
+
+/* ---------- 9 CHIỀU Ý ĐỊNH -> CÂU HỎI PHỎNG VẤN NGƯỢC ------------------- */
+function buildInterview(domainKey) {
+  const common = [
+    { id: "goal", dim: "Mục tiêu thật",
+      q: "Kết quả cuối cùng bạn muốn cầm trên tay là gì? (mô tả như thể nó đã xong)",
+      ph: "VD: một bản kế hoạch 1 trang đội nhỏ có thể làm ngay trong 2 tuần" },
+    { id: "context", dim: "Bối cảnh",
+      q: "Bối cảnh hiện tại quanh ý tưởng này? (nguồn lực, thời gian, ràng buộc đang có)",
+      ph: "VD: 1 mình làm, ~10h/tuần, đã có Next.js + Supabase" },
+    { id: "have", dim: "Đầu vào đã có",
+      q: "Bạn đã có sẵn dữ liệu/tài liệu/tài sản nào liên quan?",
+      ph: "VD: research scam đã xong, 43 asset hình, danh sách scenario" },
+    { id: "success", dim: "Tiêu chí thành công",
+      q: "Bạn dựa vào đâu để nói 'cái này tốt'? Điều gì khiến nó thất bại?",
+      ph: "VD: thành công nếu người chơi nhận diện được 3 chiêu lừa; thất bại nếu nhàm chán" },
+    { id: "risk", dim: "Rủi ro hiểu sai",
+      q: "Điều gì bạn KHÔNG muốn Claude tự suy diễn hoặc làm sai?",
+      ph: "VD: đừng biến nó thành bài giảng khô khan; đừng giả định người dùng rành công nghệ" },
+  ];
+  const byDomain = {
+    edu: [{ id: "age", dim: "Đối tượng",
+      q: "Trẻ ở độ tuổi/giai đoạn nào, và năng lực hiện tại tới đâu?",
+      ph: "VD: ~3.5 tuổi, nhận mặt chữ cái, chưa ghép vần" }],
+    indie: [{ id: "stack", dim: "Ràng buộc kỹ thuật",
+      q: "Stack/nền tảng và giới hạn kỹ thuật cần tôn trọng?",
+      ph: "VD: Next.js 14, Zustand, offline-first PWA, không API trả phí" }],
+    general: [{ id: "field", dim: "Lĩnh vực cụ thể",
+      q: "Đây là lĩnh vực nào, và 'người trong nghề' sẽ quan tâm điều gì nhất?",
+      ph: "VD: marketing — họ sợ chiến dịch bị cộng đồng ném đá" }],
+  };
+  return common.concat(byDomain[domainKey] || []);
+}
+
+/* ---------- PROMPT ASSEMBLER (lắp ráp master prompt XML) ----------------- */
+function assemble(s) {
+  const d = DOMAINS[s.domain];
+  const has = (k) => s.techniques.indexOf(k) !== -1;
+  const a = (id) => ((s.answers && s.answers[id]) || "").trim();
+
+  let roleLine = "Bạn là " + d.role + ".";
+  if (has("adversarial")) roleLine += " Bạn cực kỳ ghét sự hời hợt và sẵn sàng phản biện thẳng thắn thay vì xoa dịu.";
+
+  const ctxLines = [];
+  if (a("context")) ctxLines.push(a("context"));
+  if (a("age")) ctxLines.push("Đối tượng: " + a("age") + ".");
+  if (a("stack")) ctxLines.push("Ràng buộc kỹ thuật: " + a("stack") + ".");
+  if (a("field")) ctxLines.push("Lĩnh vực: " + a("field") + ".");
+  if (a("have")) ctxLines.push("Đầu vào đã có: " + a("have") + ".");
+  ctxLines.push("Đối tượng sử dụng kết quả: " + d.audience + ".");
+
+  const instr = [];
+  const goalRaw = a("goal") || s.idea || "[mô tả mục tiêu]";
+  instr.push("Nhiệm vụ chính: " + goalRaw.replace(/\.+$/, "") + ".");
+  if (a("success")) instr.push("Tiêu chí thành công cần bám sát: " + a("success").replace(/\.+$/, "") + ".");
+  if (has("interviewer")) instr.push("TRƯỚC KHI làm, nếu còn thiếu thông tin quan trọng, hãy hỏi tối đa 3 câu sắc bén nhất. Nếu đủ để làm tốt, tự nêu rõ giả định rồi tiếp tục.");
+  if (has("topology")) {
+    instr.push("Bước 1 — Khám phá địa hình: liệt kê các thực thể tham gia, mối quan hệ ràng buộc và đâu là điểm cốt lõi (anchor) giữ hệ thống vận hành.");
+    instr.push("Bước 2 — Bán kính ảnh hưởng: nếu thay đổi yếu tố then chốt, các hệ quả dây chuyền nào xảy ra?");
+  }
+  if (has("workflow")) instr.push("Áp dụng quy trình: Explore (đọc kỹ, xác định rõ/chưa rõ) → Plan (chia bước nhỏ, nêu trade-off) → Execute (làm đúng kế hoạch) → Verify (tự review như reviewer khó tính) → Report (tóm tắt + bước tiếp theo).");
+  if (has("cot")) instr.push("Trước khi đưa kết quả cuối, hãy viết toàn bộ suy luận bên trong thẻ <analysis>. Áp dụng phân tích cho TẤT CẢ các phần, không chỉ phần đầu tiên.");
+
+  const cons = d.constraints.slice();
+  if (has("adversarial")) cons.unshift("Không khen ngợi sáo rỗng. Chỉ ra 3 lỗ hổng nghiêm trọng nhất kèm cách khắc phục cụ thể.");
+  if (has("honesty")) cons.push("Nếu không chắc về một nhận định, hãy đánh dấu rõ thay vì hedge mọi thứ. Ghi rõ mọi giả định đang dùng.");
+  if (a("risk")) cons.push("Tránh: " + a("risk").replace(/\.+$/, "") + ".");
+  if (s.verbosity === "concise") cons.push("Trả lời cô đọng, bỏ phần thừa, ví dụ tối thiểu.");
+  if (s.verbosity === "deep") cons.push("Đây là tài liệu để xem xét cấp cao — đào sâu mọi chiều, đừng nén phân tích.");
+
+  const out = [];
+  if (has("cot")) out.push("Phần phân tích bên trong thẻ <analysis>.");
+  out.push("Kết quả chính, rõ ràng và trực diện.");
+  if (has("workflow")) out.push("Bản tự kiểm chứng chất lượng (đúng/đủ/rõ/ứng dụng).");
+  out.push("3–5 bước hành động tiếp theo, xếp theo mức tác động.");
+
+  const thinkOn = has("cot") || has("workflow") || s.effort === "max" || s.effort === "xhigh";
+  const meta = [
+    "Effort đề xuất: " + s.effort + " (đặt khi gọi qua API/Claude Code).",
+    thinkOn ? 'Bật adaptive thinking: thinking={"type":"adaptive"}.' : "Thinking có thể tắt nếu task đơn giản.",
+  ];
+  if (s.effort === "max" || s.effort === "xhigh") meta.push("Đặt max_tokens ≥ 64k để có chỗ suy luận.");
+
+  const block = (tag, body) => {
+    if (!body || !body.length) return "";
+    const inner = Array.isArray(body) ? body.map((x) => "  " + x).join("\n") : body;
+    return "<" + tag + ">\n" + inner + "\n</" + tag + ">";
+  };
+  const numbered = (arr) => arr.map((x, i) => (i + 1) + ". " + x);
+
+  const parts = [
+    block("role", roleLine),
+    block("context", ctxLines),
+    block("instructions", numbered(instr)),
+    block("constraints", cons.map((c) => "- " + c)),
+    block("output_format", numbered(out)),
+    block("quality_bar", d.qualityBar),
+  ].filter(Boolean);
+
+  const promptBody = parts.join("\n\n");
+  const settings = "/* CÀI ĐẶT MODEL (Claude Opus 4.8)\n" + meta.map((m) => " * " + m).join("\n") + "\n */";
+  return { promptBody: promptBody, settings: settings, thinkOn: thinkOn, effort: s.effort };
+}
+
+/* ---------- SCORE -------------------------------------------------------- */
+function goldScore(s) {
+  let v = 0;
+  if ((s.idea || "").trim().length > 12) v += 15;
+  const vals = s.answers ? Object.keys(s.answers).map((k) => s.answers[k]) : [];
+  const filled = vals.filter((x) => (x || "").trim().length > 3).length;
+  v += Math.min(filled * 10, 50);
+  v += Math.min(s.techniques.length * 7, 35);
+  return Math.min(v, 100);
+}
+
+/* ============================================================================
+   STATE + PERSISTENCE
+============================================================================ */
+const KEY = "promptforge:v1";
+const STEPS = ["Ý tưởng thô", "Lĩnh vực", "Phỏng vấn ngược", "Kỹ thuật", "Rèn vàng"];
+
+function defaults() {
+  return { step: 0, idea: "", domain: "indie", answers: {},
+    techniques: ["interviewer", "cot", "honesty"], effort: "xhigh", verbosity: "balanced" };
+}
+function loadState() {
+  const st = defaults();
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { saved = null; }
+  if (saved && typeof saved === "object") {
+    if (typeof saved.idea === "string") st.idea = saved.idea;
+    if (DOMAINS[saved.domain]) st.domain = saved.domain;
+    if (saved.answers && typeof saved.answers === "object") st.answers = saved.answers;
+    if (Array.isArray(saved.techniques)) st.techniques = saved.techniques.filter((k) => TECHNIQUES[k]);
+    if (EFFORTS.some((e) => e.key === saved.effort)) st.effort = saved.effort;
+    if (VERBOSITY.some((v) => v[0] === saved.verbosity)) st.verbosity = saved.verbosity;
+    if (typeof saved.step === "number" && saved.step >= 0 && saved.step <= 4) st.step = saved.step;
+  }
+  return st;
+}
+function save() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify({
+      step: state.step, idea: state.idea, domain: state.domain, answers: state.answers,
+      techniques: state.techniques, effort: state.effort, verbosity: state.verbosity,
+    }));
+  } catch (e) { /* localStorage chặn — bỏ qua */ }
+}
+
+const state = loadState();
+let currentPrompt = "";
+let lastStep = null;
+
+/* ---------- helpers ------------------------------------------------------ */
+function escHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function escAttr(s) { return escHtml(s).replace(/"/g, "&quot;"); }
+const app = document.getElementById("app");
+
+/* ============================================================================
+   VIEW
+============================================================================ */
+function headerHTML() {
+  const sc = goldScore(state);
+  return (
+    '<header class="header">' +
+      '<div class="brand-row">' +
+        '<div class="brand-badge">' + icon("flame", 24) + "</div>" +
+        "<div>" +
+          '<h1 class="h1">PROMPT FORGE</h1>' +
+          '<p class="tag">Lò rèn quặng thô thành prompt vàng cho Claude Opus 4.8</p>' +
+        "</div>" +
+      "</div>" +
+      '<div class="score-wrap" title="Độ vàng — càng cao prompt càng sắc">' +
+        '<div class="score-num" id="scoreNum">' + sc + "</div>" +
+        '<div class="score-lbl">ĐỘ VÀNG</div>' +
+        '<div class="score-bar-outer"><div class="score-bar-inner" id="scoreBar" style="width:' + sc + '%"></div></div>' +
+      "</div>" +
+    "</header>"
+  );
+}
+
+function railHTML() {
+  let h = '<nav class="rail">';
+  for (let i = 0; i < STEPS.length; i++) {
+    h += '<button class="rail-item' + (i === state.step ? " active" : "") + '" data-step="' + i + '">' +
+      '<span class="rail-num">' + (i + 1) + "</span>" +
+      "<span>" + STEPS[i] + "</span></button>";
+  }
+  return h + "</nav>";
+}
+
+function step0() {
+  return (
+    '<section class="card">' +
+      '<h2 class="h2">Đổ quặng thô vào lò</h2>' +
+      '<p class="lead">Viết ý tưởng theo cách bạn nghĩ trong đầu — lộn xộn cũng được. Lò sẽ tinh luyện sau.</p>' +
+      '<textarea class="ta" id="ideaInput" data-input="idea" rows="5" placeholder="VD: tôi muốn làm một game dạy con nhận diện các chiêu lừa đảo qua tình huống có nhánh, vui mà vẫn nhớ được bài học…"></textarea>' +
+      '<div class="actions">' +
+        '<button class="btn primary" id="nextBtn" data-step="1">Chọn lĩnh vực ' + icon("right") + "</button>" +
+      "</div>" +
+    "</section>"
+  );
+}
+
+function step1() {
+  let cards = "";
+  Object.keys(DOMAINS).forEach((k) => {
+    const d = DOMAINS[k], on = state.domain === d.key;
+    cards += '<button class="domain-card' + (on ? " active" : "") + '" data-domain="' + d.key + '">' +
+      '<div class="domain-label">' + escHtml(d.label) + "</div>" +
+      '<div class="domain-hint">' + escHtml(d.hint) + "</div>" +
+      (on ? '<div class="domain-check">' + icon("check", 15) + " đã chọn</div>" : "") + "</button>";
+  });
+  return (
+    '<section class="card">' +
+      '<h2 class="h2">Lò luyện theo lĩnh vực</h2>' +
+      '<p class="lead">Mỗi lĩnh vực mang sẵn vai trò, đối tượng và chuẩn chất lượng riêng.</p>' +
+      '<div class="domain-grid">' + cards + "</div>" +
+      '<div class="actions">' +
+        '<button class="btn ghost" data-step="0">' + icon("left") + " Quay lại</button>" +
+        '<button class="btn primary" data-step="2">Phỏng vấn ngược ' + icon("right") + "</button>" +
+      "</div>" +
+    "</section>"
+  );
+}
+
+function step2() {
+  let qs = "";
+  buildInterview(state.domain).forEach((item, i) => {
+    qs += '<div class="q-item">' +
+      '<div class="q-head"><span class="q-dim">' + escHtml(item.dim) + "</span>" +
+      '<span class="q-idx">' + String(i + 1).padStart(2, "0") + "</span></div>" +
+      '<label class="q-label">' + escHtml(item.q) + "</label>" +
+      '<textarea class="q-input" rows="2" data-answer="' + item.id + '" placeholder="' + escAttr(item.ph) + '"></textarea></div>';
+  });
+  return (
+    '<section class="card">' +
+      '<h2 class="h2">Phỏng vấn ngược</h2>' +
+      '<p class="lead">Đây là bước biến ý tưởng thường thành ý tưởng vàng. Trả lời những gì bạn rõ — bỏ trống cũng không sao, lò sẽ tự đánh dấu giả định.</p>' +
+      '<div class="q-list">' + qs + "</div>" +
+      '<div class="actions">' +
+        '<button class="btn ghost" data-step="1">' + icon("left") + " Quay lại</button>" +
+        '<button class="btn primary" data-step="3">Chọn kỹ thuật ' + icon("right") + "</button>" +
+      "</div>" +
+    "</section>"
+  );
+}
+
+function step3() {
+  let cards = "";
+  Object.keys(TECHNIQUES).forEach((k) => {
+    const t = TECHNIQUES[k], on = state.techniques.indexOf(t.key) !== -1;
+    cards += '<button class="tech-card' + (on ? " on" : "") + '" data-tech="' + t.key + '">' +
+      '<div class="tech-top"><span class="tech-name">' + escHtml(t.name) + "</span>" +
+      '<span class="tech-dot"></span></div>' +
+      '<div class="tech-en">' + escHtml(t.en) + "</div>" +
+      '<div class="tech-desc">' + escHtml(t.desc) + "</div>" +
+      '<div class="tech-src">nguồn · ' + escHtml(t.source) + "</div></button>";
+  });
+  let effortPills = "";
+  EFFORTS.forEach((e) => {
+    effortPills += '<button class="pill' + (state.effort === e.key ? " on" : "") + '" data-effort="' + e.key + '" title="' + escAttr(e.note) + '">' + e.label + "</button>";
+  });
+  const effortNote = (EFFORTS.find((e) => e.key === state.effort) || {}).note || "";
+  let verbPills = "";
+  VERBOSITY.forEach((v) => {
+    verbPills += '<button class="pill' + (state.verbosity === v[0] ? " on" : "") + '" data-verb="' + v[0] + '">' + v[1] + "</button>";
+  });
+  return (
+    '<section class="card">' +
+      '<h2 class="h2">Chọn hợp kim kỹ thuật</h2>' +
+      '<p class="lead">Mỗi kỹ thuật là một lớp hợp kim. Bật cái nào, prompt sẽ tự mọc thêm khối tương ứng.</p>' +
+      '<div class="tech-grid">' + cards + "</div>" +
+      '<div class="tune-row">' +
+        '<div><div class="tune-lbl">Mức effort (Opus 4.8)</div>' +
+          '<div class="pill-row">' + effortPills + "</div>" +
+          '<div class="tune-note">' + escHtml(effortNote) + "</div></div>" +
+        '<div><div class="tune-lbl">Độ dài đầu ra</div>' +
+          '<div class="pill-row">' + verbPills + "</div>" +
+          '<div class="tune-note"></div></div>' +
+      "</div>" +
+      '<div class="actions">' +
+        '<button class="btn ghost" data-step="2">' + icon("left") + " Quay lại</button>" +
+        '<button class="btn gold" data-step="4">' + icon("sparkles") + " Rèn prompt vàng</button>" +
+      "</div>" +
+    "</section>"
+  );
+}
+
+function step4() {
+  const forged = assemble(state);
+  currentPrompt = forged.settings + "\n\n" + forged.promptBody;
+  return (
+    '<section class="card">' +
+      '<div class="forge-head">' +
+        '<h2 class="h2">Prompt vàng đã ra lò</h2>' +
+        '<div class="forge-meta">' +
+          '<span class="meta-chip">effort: ' + forged.effort + "</span>" +
+          '<span class="meta-chip">thinking: ' + (forged.thinkOn ? "adaptive" : "off") + "</span>" +
+          '<span class="meta-chip">' + state.techniques.length + " kỹ thuật</span>" +
+        "</div></div>" +
+      '<div class="output-wrap"><pre class="output" id="outPre"></pre></div>' +
+      '<div class="actions">' +
+        '<button class="btn ghost" data-step="3">' + icon("left") + " Tinh chỉnh</button>" +
+        '<button class="btn gold" id="copyBtn" data-action="copy">' + icon("copy") + " Sao chép prompt</button>" +
+      "</div>" +
+      '<div class="tip-box">' +
+        '<strong class="tip-head">' + icon("sparkles", 17) + " Cách dùng để ra sản phẩm ngôi sao</strong>" +
+        '<ol class="tip-list">' +
+          "<li>Dán prompt này vào Claude Opus 4.8 (web/Code), đặt effort như ghi chú ở đầu.</li>" +
+          "<li>Nếu bật <em>Phỏng vấn ngược</em>, Claude sẽ hỏi lại — trả lời thật kỹ, đây là lúc ý tưởng được tinh luyện.</li>" +
+          "<li>Nhận kết quả → quay lại bật <em>Phản biện ác ý</em> để Claude tự đập rồi nâng cấp.</li>" +
+          "<li>Lặp 2–3 vòng. Quặng thô qua mỗi vòng lửa sẽ sáng dần thành vàng.</li>" +
+        "</ol></div>" +
+    "</section>"
+  );
+}
+
+function footerHTML() {
+  return (
+    '<footer class="footer">' +
+      "<span>Tự lưu nháp trên máy bạn · pure-local · không gọi API</span>" +
+      '<button class="reset-btn" data-action="reset">' + icon("refresh", 15) + " làm mới</button>" +
+    "</footer>"
+  );
+}
+
+function stepHTML() {
+  switch (state.step) {
+    case 0: return step0();
+    case 1: return step1();
+    case 2: return step2();
+    case 3: return step3();
+    case 4: return step4();
+    default: return step0();
+  }
+}
+
+function render() {
+  const animate = state.step !== lastStep;
+  lastStep = state.step;
+  app.innerHTML = headerHTML() + railHTML() + '<main class="main">' + stepHTML() + "</main>" + footerHTML();
+  syncInputs();
+  if (animate) {
+    const card = app.querySelector(".card");
+    if (card) card.classList.add("fade-up");
+    app.querySelectorAll(".domain-grid,.tech-grid,.q-list").forEach((g) => g.classList.add("stagger"));
+  }
+  save();
+}
+
+function syncInputs() {
+  const idea = document.getElementById("ideaInput");
+  if (idea) {
+    idea.value = state.idea;
+    const nb = document.getElementById("nextBtn");
+    if (nb) nb.disabled = !state.idea.trim();
+  }
+  document.querySelectorAll("[data-answer]").forEach((el) => {
+    el.value = state.answers[el.getAttribute("data-answer")] || "";
+  });
+  const out = document.getElementById("outPre");
+  if (out) out.textContent = currentPrompt;
+}
+
+function updateLive() {
+  const sc = goldScore(state);
+  const n = document.getElementById("scoreNum"); if (n) n.textContent = sc;
+  const b = document.getElementById("scoreBar"); if (b) b.style.width = sc + "%";
+  const nb = document.getElementById("nextBtn"); if (nb) nb.disabled = !state.idea.trim();
+}
+
+/* ---------- COPY (chạy cả trên file:// nhờ fallback execCommand) --------- */
+function flashCopied() {
+  const btn = document.getElementById("copyBtn");
+  if (!btn) return;
+  btn.innerHTML = icon("check") + " Đã sao chép";
+  setTimeout(() => { const b = document.getElementById("copyBtn"); if (b) b.innerHTML = icon("copy") + " Sao chép prompt"; }, 1600);
+}
+function copyPrompt() {
+  const text = currentPrompt;
+  const fallback = () => {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.top = "-9999px";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand("copy"); flashCopied(); } catch (e) {}
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(flashCopied, fallback);
+  else fallback();
+}
+
+/* ---------- EVENTS (delegation — gắn 1 lần) ------------------------------ */
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-step],[data-domain],[data-tech],[data-effort],[data-verb],[data-action]");
+  if (!t) return;
+  if (t.hasAttribute("data-step")) { state.step = parseInt(t.getAttribute("data-step"), 10); render(); }
+  else if (t.hasAttribute("data-domain")) { state.domain = t.getAttribute("data-domain"); render(); }
+  else if (t.hasAttribute("data-tech")) {
+    const k = t.getAttribute("data-tech"), i = state.techniques.indexOf(k);
+    if (i === -1) state.techniques.push(k); else state.techniques.splice(i, 1);
+    render();
+  }
+  else if (t.hasAttribute("data-effort")) { state.effort = t.getAttribute("data-effort"); render(); }
+  else if (t.hasAttribute("data-verb")) { state.verbosity = t.getAttribute("data-verb"); render(); }
+  else if (t.getAttribute("data-action") === "copy") { copyPrompt(); }
+  else if (t.getAttribute("data-action") === "reset") {
+    const fresh = defaults();
+    Object.keys(fresh).forEach((k) => { state[k] = fresh[k]; });
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    render();
+  }
+});
+document.addEventListener("input", (e) => {
+  const t = e.target;
+  if (!t || !t.getAttribute) return;
+  if (t.getAttribute("data-input") === "idea") { state.idea = t.value; save(); updateLive(); }
+  else if (t.hasAttribute("data-answer")) { state.answers[t.getAttribute("data-answer")] = t.value; save(); updateLive(); }
+});
+
+/* ---------- BOOT --------------------------------------------------------- */
+render();
+</script>
+</body>
+</html>
