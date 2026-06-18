@@ -203,6 +203,28 @@ textarea{font-family:inherit}
 /* trôi ngang dọc ribbon: left -14%→112%, lắc theo vòng cung (dip ở giữa) + lăn tròn 360° */
 @keyframes flowRide{0%{left:-14%;transform:translateY(-12px) rotate(0deg)}50%{transform:translateY(8px) rotate(180deg)}100%{left:112%;transform:translateY(-12px) rotate(360deg)}}
 @media(max-width:760px){.hero{grid-template-columns:1fr}.hero-visual{height:210px;order:-1}}
+/* ===== đính kèm tệp (bước 0) ===== */
+.hero{align-items:flex-start}
+.dropzone{margin-top:14px;border:1.5px dashed var(--line-strong);border-radius:14px;padding:15px 16px;display:flex;align-items:center;gap:12px;color:var(--muted);cursor:pointer;background:var(--field);transition:all .16s ease;text-align:left}
+.dropzone:hover{border-color:var(--gold);color:var(--ink)}
+.dropzone.drag{border-color:var(--gold);background:var(--gold-soft);color:var(--ink)}
+.dropzone .ic{flex:none;color:var(--ember)}
+.dz-text{font-size:13.5px;line-height:1.45}
+.dz-text strong{color:var(--ink);font-weight:700}
+.dz-hint{font-size:11.5px;color:var(--muted)}
+.attach-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.att{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 11px;animation:fadeUp .35s ease both}
+.att.reading{opacity:.65}
+.att.error{border-color:#E0B4B0}
+.att-thumb{width:38px;height:38px;border-radius:8px;object-fit:cover;flex:none}
+.att-ic{width:38px;height:38px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--gold-soft);color:var(--ember)}
+.att-ic.pdf{background:rgba(194,69,63,.12);color:#C2453F}
+.att-ic.other{background:rgba(110,116,128,.12);color:var(--muted)}
+.att-meta{flex:1;min-width:0}
+.att-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att-sub{font-size:11.5px;color:var(--muted)}
+.att-rm{flex:none;color:var(--muted);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+.att-rm:hover{color:#C2453F;background:rgba(194,69,63,.1)}
 @media(prefers-reduced-motion:reduce){
   .bg-aurora span,.orb,.score-bar-inner,.btn.gold::after{animation:none}
   .orb.o1{left:12%}.orb.o2{left:44%}.orb.o3{left:64%}.orb.o4{left:32%}
@@ -232,6 +254,10 @@ const ICONS = {
   refresh: '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
   right: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
   left: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
 };
 function icon(name, size) {
   size = size || 18;
@@ -348,6 +374,26 @@ function assemble(s) {
   const has = (k) => s.techniques.indexOf(k) !== -1;
   const a = (id) => ((s.answers && s.answers[id]) || "").trim();
 
+  // --- tài liệu đính kèm (đọc từ tệp upload ở bước 0)
+  const okFiles = attachments.filter((x) => x.status === "ok" && x.text);
+  const refFiles = attachments.filter((x) => x.status === "note");
+  const hasAttach = okFiles.length > 0 || refFiles.length > 0;
+  let attachBody = "";
+  if (hasAttach) {
+    const ps = [];
+    okFiles.forEach((x) => {
+      let body = x.text;
+      if (x.truncated) body += "\n...[đã cắt bớt — tệp gốc " + x.fullLen + " ký tự]";
+      ps.push("### " + x.name + (x.pages ? (" — " + x.pages + " trang") : "") + "\n```\n" + body + "\n```");
+    });
+    refFiles.forEach((x) => {
+      ps.push("### " + x.name + " — " + (x.kind === "image"
+        ? "ẢNH đính kèm. Hãy kéo trực tiếp ảnh này vào Claude để Claude nhìn được; ở đây chỉ ghi nhận có ảnh."
+        : (x.note || "đính kèm, chưa đọc được nội dung.")));
+    });
+    attachBody = ps.join("\n\n");
+  }
+
   let roleLine = "Bạn là " + d.role + ".";
   if (has("adversarial")) roleLine += " Bạn cực kỳ ghét sự hời hợt và sẵn sàng phản biện thẳng thắn thay vì xoa dịu.";
 
@@ -362,6 +408,7 @@ function assemble(s) {
   const instr = [];
   const goalRaw = a("goal") || s.idea || "[mô tả mục tiêu]";
   instr.push("Nhiệm vụ chính: " + goalRaw.replace(/\.+$/, "") + ".");
+  if (hasAttach) instr.push("Người dùng đã đính kèm tài liệu trong <attached_files> — đọc kỹ và dùng làm ngữ cảnh chính, ưu tiên thông tin trong đó.");
   if (a("success")) instr.push("Tiêu chí thành công cần bám sát: " + a("success").replace(/\.+$/, "") + ".");
   if (has("interviewer")) instr.push("TRƯỚC KHI làm, nếu còn thiếu thông tin quan trọng, hãy hỏi tối đa 3 câu sắc bén nhất. Nếu đủ để làm tốt, tự nêu rõ giả định rồi tiếp tục.");
   if (has("topology")) {
@@ -401,6 +448,7 @@ function assemble(s) {
   const parts = [
     block("role", roleLine),
     block("context", ctxLines),
+    block("attached_files", attachBody),
     block("instructions", numbered(instr)),
     block("constraints", cons.map((c) => "- " + c)),
     block("output_format", numbered(out)),
@@ -420,6 +468,8 @@ function goldScore(s) {
   const filled = vals.filter((x) => (x || "").trim().length > 3).length;
   v += Math.min(filled * 10, 50);
   v += Math.min(s.techniques.length * 7, 35);
+  const okA = attachments.filter((x) => x.status === "ok" || x.status === "note").length;
+  v += Math.min(okA * 6, 18);
   return Math.min(v, 100);
 }
 
@@ -460,6 +510,9 @@ function save() {
 const state = loadState();
 let currentPrompt = "";
 let lastStep = null;
+const attachments = []; // tệp đính kèm — chỉ trong phiên, KHÔNG lưu localStorage (tránh tràn quota)
+let fileSeq = 0;
+let pdfLibPromise = null;
 
 /* ---------- helpers ------------------------------------------------------ */
 function escHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
@@ -510,6 +563,12 @@ function step0() {
           '<h2 class="h2">Biến ý tưởng thô<br>thành prompt vàng</h2>' +
           '<p class="lead">Viết ý tưởng theo cách bạn nghĩ trong đầu — lộn xộn cũng được. Lò sẽ tinh luyện qua 5 bước.</p>' +
           '<textarea class="ta" id="ideaInput" data-input="idea" rows="4" placeholder="VD: tôi muốn làm một game dạy con nhận diện các chiêu lừa đảo qua tình huống có nhánh, vui mà vẫn nhớ được bài học…"></textarea>' +
+          '<div class="dropzone" id="dropzone">' +
+            '<input type="file" id="fileInput" multiple hidden>' +
+            icon("upload", 20) +
+            '<div class="dz-text"><strong>Kéo thả tệp vào đây</strong> hoặc bấm để chọn<br><span class="dz-hint">mã nguồn · .md · .txt · .json · pdf · ảnh — đọc và đưa vào ngữ cảnh prompt</span></div>' +
+          "</div>" +
+          '<div class="attach-list" id="attachList"></div>' +
           '<div class="actions" style="justify-content:flex-start">' +
             '<button class="btn gold" id="nextBtn" data-step="1">Bắt đầu rèn ' + icon("right") + "</button>" +
           "</div>" +
@@ -662,6 +721,7 @@ function render() {
   lastStep = state.step;
   app.innerHTML = headerHTML() + railHTML() + '<main class="main">' + stepHTML() + "</main>" + footerHTML();
   syncInputs();
+  if (state.step === 0) wireStep0();
   if (animate) {
     const card = app.querySelector(".card");
     if (card) card.classList.add("fade-up");
@@ -711,6 +771,116 @@ function copyPrompt() {
   else fallback();
 }
 
+/* ---------- FILE ATTACH (bước 0) ---------------------------------------- */
+const TEXT_EXTS = ["txt","md","markdown","mdx","rtf","log","js","mjs","cjs","jsx","ts","tsx","py","rb","php","java","c","h","cpp","cc","hpp","cs","go","rs","swift","kt","kts","html","htm","css","scss","sass","less","json","jsonc","csv","tsv","xml","yml","yaml","toml","ini","env","sh","bash","zsh","sql","vue","svelte","astro","gitignore","dockerfile","makefile","gradle","properties","cfg","conf","lock","map"];
+function extOf(name) { const i = name.lastIndexOf("."); return i >= 0 ? name.slice(i + 1).toLowerCase() : ""; }
+function kindOf(file) {
+  const t = file.type || "", e = extOf(file.name);
+  if (t.indexOf("image/") === 0) return "image";
+  if (t === "application/pdf" || e === "pdf") return "pdf";
+  if (t.indexOf("text/") === 0 || t === "application/json" || t === "application/xml" || t === "application/javascript") return "text";
+  if (TEXT_EXTS.indexOf(e) >= 0 || e === "") return "text";
+  return "other";
+}
+function formatSize(b) { if (b < 1024) return b + " B"; if (b < 1048576) return (b / 1024).toFixed(0) + " KB"; return (b / 1048576).toFixed(1) + " MB"; }
+function attachGlyph(kind) { return icon(kind === "image" ? "image" : "file", 18); }
+function fileStatusLabel(a) {
+  if (a.status === "reading") return "đang đọc…";
+  if (a.status === "ok") return a.kind === "pdf" ? ("đã đọc " + (a.pages || "?") + " trang") : ("đã đọc" + (a.truncated ? " (cắt bớt)" : ""));
+  if (a.status === "note") return a.kind === "image" ? "ảnh — kéo vào Claude" : "đính kèm (không đọc nội dung)";
+  return "lỗi đọc tệp";
+}
+function finalizeAtt() { renderAttachments(); updateLive(); }
+const MAX_TEXT = 24000;
+function readText(file, att) {
+  const r = new FileReader();
+  r.onload = function () { let t = String(r.result || ""); if (t.length > MAX_TEXT) { att.text = t.slice(0, MAX_TEXT); att.truncated = true; att.fullLen = t.length; } else att.text = t; att.status = "ok"; finalizeAtt(); };
+  r.onerror = function () { att.status = "error"; finalizeAtt(); };
+  r.readAsText(file);
+}
+function readImage(file, att) {
+  const r = new FileReader();
+  r.onload = function () { att.dataUrl = String(r.result || ""); att.status = "note"; att.note = "Ảnh — app không đọc được nội dung khi chạy local."; finalizeAtt(); };
+  r.onerror = function () { att.status = "error"; finalizeAtt(); };
+  r.readAsDataURL(file);
+}
+function loadPdfLib() {
+  if (pdfLibPromise) return pdfLibPromise;
+  pdfLibPromise = import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4/build/pdf.min.mjs").then(function (lib) {
+    try { lib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4/build/pdf.worker.min.mjs"; } catch (e) {}
+    return lib;
+  });
+  return pdfLibPromise;
+}
+function readPdf(file, att) {
+  loadPdfLib().then(function (lib) {
+    return file.arrayBuffer().then(function (buf) { return lib.getDocument({ data: buf }).promise; }).then(function (pdf) {
+      att.pages = pdf.numPages;
+      const maxP = Math.min(pdf.numPages, 40);
+      let chain = Promise.resolve("");
+      for (let p = 1; p <= maxP; p++) {
+        (function (pg) {
+          chain = chain.then(function (acc) {
+            return pdf.getPage(pg).then(function (page) { return page.getTextContent(); }).then(function (tc) {
+              return acc + tc.items.map(function (it) { return it.str; }).join(" ") + "\n";
+            });
+          });
+        })(p);
+      }
+      return chain;
+    });
+  }).then(function (text) {
+    text = (text || "").trim();
+    if (!text) { att.status = "note"; att.note = "PDF không trích được text (có thể là bản scan). Đính kèm trực tiếp trong Claude."; }
+    else if (text.length > MAX_TEXT) { att.text = text.slice(0, MAX_TEXT); att.truncated = true; att.fullLen = text.length; att.status = "ok"; }
+    else { att.text = text; att.status = "ok"; }
+    finalizeAtt();
+  }).catch(function () {
+    att.status = "note"; att.note = "Không đọc được PDF (cần mạng để tải bộ giải mã, hoặc tệp lỗi). Đính kèm trực tiếp trong Claude.";
+    finalizeAtt();
+  });
+}
+function addFiles(fileList) {
+  Array.prototype.slice.call(fileList || []).forEach(function (file) {
+    const att = { id: "f" + (fileSeq++), name: file.name, size: file.size, kind: kindOf(file), status: "reading", text: "", dataUrl: "", note: "", pages: 0 };
+    attachments.push(att);
+    if (att.kind === "text") readText(file, att);
+    else if (att.kind === "image") readImage(file, att);
+    else if (att.kind === "pdf") readPdf(file, att);
+    else { att.status = "note"; att.note = "Tệp nhị phân — không đọc được nội dung."; }
+  });
+  renderAttachments(); updateLive();
+}
+function removeFile(id) {
+  const i = attachments.findIndex(function (a) { return a.id === id; });
+  if (i >= 0) attachments.splice(i, 1);
+  renderAttachments(); updateLive();
+}
+function renderAttachments() {
+  const box = document.getElementById("attachList");
+  if (!box) return;
+  box.innerHTML = attachments.map(function (a) {
+    const thumb = (a.kind === "image" && a.dataUrl)
+      ? '<img class="att-thumb" src="' + a.dataUrl + '" alt="">'
+      : '<span class="att-ic ' + a.kind + '">' + attachGlyph(a.kind) + "</span>";
+    return '<div class="att ' + a.status + '">' + thumb +
+      '<div class="att-meta"><div class="att-name">' + escHtml(a.name) + "</div>" +
+      '<div class="att-sub">' + fileStatusLabel(a) + " · " + formatSize(a.size) + "</div></div>" +
+      '<button class="att-rm" data-action="rmfile" data-id="' + a.id + '" title="Gỡ tệp">' + icon("x", 16) + "</button></div>";
+  }).join("");
+}
+function wireStep0() {
+  const dz = document.getElementById("dropzone");
+  if (!dz) return;
+  const input = document.getElementById("fileInput");
+  dz.addEventListener("click", function () { input.click(); });
+  input.addEventListener("change", function (e) { addFiles(e.target.files); input.value = ""; });
+  ["dragenter", "dragover"].forEach(function (ev) { dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.add("drag"); }); });
+  dz.addEventListener("dragleave", function (e) { if (e.target === dz) dz.classList.remove("drag"); });
+  dz.addEventListener("drop", function (e) { e.preventDefault(); dz.classList.remove("drag"); if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files); });
+  renderAttachments();
+}
+
 /* ---------- EVENTS (delegation — gắn 1 lần) ------------------------------ */
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-step],[data-domain],[data-tech],[data-effort],[data-verb],[data-action]");
@@ -725,9 +895,11 @@ document.addEventListener("click", (e) => {
   else if (t.hasAttribute("data-effort")) { state.effort = t.getAttribute("data-effort"); render(); }
   else if (t.hasAttribute("data-verb")) { state.verbosity = t.getAttribute("data-verb"); render(); }
   else if (t.getAttribute("data-action") === "copy") { copyPrompt(); }
+  else if (t.getAttribute("data-action") === "rmfile") { removeFile(t.getAttribute("data-id")); }
   else if (t.getAttribute("data-action") === "reset") {
     const fresh = defaults();
     Object.keys(fresh).forEach((k) => { state[k] = fresh[k]; });
+    attachments.length = 0;
     try { localStorage.removeItem(KEY); } catch (e) {}
     render();
   }
