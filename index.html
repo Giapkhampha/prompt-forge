@@ -193,18 +193,20 @@ textarea{font-family:inherit}
 .hero-copy .h2{font-size:clamp(26px,4.4vw,42px);line-height:1.04;margin-bottom:14px}
 .hero-visual{position:relative;height:320px;border-radius:22px;overflow:hidden;background:linear-gradient(160deg,#ffffff,#F3EEE1);box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 20px 48px rgba(25,40,55,.12)}
 .hero-visual .ribbon{position:absolute;left:-8%;right:-8%;bottom:30%;height:48%;background:linear-gradient(180deg,#fff,#ECE5D6);border-radius:50%;transform:rotate(-6deg);box-shadow:0 22px 44px rgba(25,40,55,.1)}
-.orb{position:absolute;border-radius:50%;will-change:transform;box-shadow:0 18px 32px rgba(25,40,55,.24)}
+.orb{position:absolute;border-radius:50%;will-change:left,transform;box-shadow:0 18px 32px rgba(25,40,55,.24);animation:flowRide var(--dur,16s) linear infinite;animation-delay:var(--delay,0s)}
 .orb .body{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 32% 26%,#fff 0%,var(--c1) 28%,var(--c2) 68%,var(--c3) 100%)}
 .orb .gloss{position:absolute;top:11%;left:17%;width:34%;height:26%;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(255,255,255,.95),rgba(255,255,255,0) 72%)}
-.orb.o1{width:98px;height:98px;left:13%;top:30%;--c1:#F8D682;--c2:#E8A23A;--c3:#C9962E;animation:floatA 7s ease-in-out infinite}
-.orb.o2{width:62px;height:62px;left:45%;top:50%;--c1:#ECBBFF;--c2:#9A6BE8;--c3:#7342E2;animation:floatB 8.5s ease-in-out infinite}
-.orb.o3{width:80px;height:80px;left:64%;top:23%;--c1:#FFE391;--c2:#F5C451;--c3:#D99A20;animation:floatC 6.4s ease-in-out infinite}
-.orb.o4{width:38px;height:38px;left:33%;top:16%;--c1:#fff;--c2:#F0E6CF;--c3:#D6C6A2;animation:floatB 5.6s ease-in-out infinite}
-@keyframes floatA{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-18px) rotate(8deg)}}
-@keyframes floatB{0%,100%{transform:translateY(0)}50%{transform:translateY(-26px)}}
-@keyframes floatC{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-14px) rotate(-7deg)}}
+.orb.o1{width:92px;height:92px;top:40%;--dur:15s;--delay:-2s;--c1:#F8D682;--c2:#E8A23A;--c3:#C9962E}
+.orb.o2{width:58px;height:58px;top:53%;--dur:18.5s;--delay:-9s;--c1:#ECBBFF;--c2:#9A6BE8;--c3:#7342E2}
+.orb.o3{width:78px;height:78px;top:33%;--dur:13s;--delay:-5.5s;--c1:#FFE391;--c2:#F5C451;--c3:#D99A20}
+.orb.o4{width:40px;height:40px;top:58%;--dur:21s;--delay:-15s;--c1:#fff;--c2:#F0E6CF;--c3:#D6C6A2}
+/* trôi ngang dọc ribbon: left -14%→112%, lắc theo vòng cung (dip ở giữa) + lăn tròn 360° */
+@keyframes flowRide{0%{left:-14%;transform:translateY(-12px) rotate(0deg)}50%{transform:translateY(8px) rotate(180deg)}100%{left:112%;transform:translateY(-12px) rotate(360deg)}}
 @media(max-width:760px){.hero{grid-template-columns:1fr}.hero-visual{height:210px;order:-1}}
-@media(prefers-reduced-motion:reduce){.bg-aurora span,.orb,.score-bar-inner,.btn.gold::after{animation:none}}
+@media(prefers-reduced-motion:reduce){
+  .bg-aurora span,.orb,.score-bar-inner,.btn.gold::after{animation:none}
+  .orb.o1{left:12%}.orb.o2{left:44%}.orb.o3{left:64%}.orb.o4{left:32%}
+}
 </style>
 </head>
 <body>
